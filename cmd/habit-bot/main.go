@@ -18,6 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	go bot.Start(ctx)
+	defer bot.Stop()
 	log.Println("bot created")
 
 	storage, err := internal.NewStorage(os.Getenv("MONGO-DB-DSN"))
@@ -29,12 +31,7 @@ func main() {
 	// Set up the service
 	service := internal.NewService(bot, storage)
 
-	updates, err := bot.GetUpdatesChan()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	workerPool := internal.NewWorkerPool(updates, bot, service, 10)
+	workerPool := internal.NewWorkerPool(bot.GetCommandsChan(), bot.GetMessagesChan(), service, 10)
 
 	// Start the worker pool
 	go workerPool.Start(ctx)
