@@ -18,7 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go bot.Start(ctx)
+	go func() { _ = bot.Start(ctx) }()
 	defer bot.Stop()
 	log.Println("bot created")
 
@@ -35,7 +35,7 @@ func main() {
 
 	// Start the worker pool
 	go workerPool.Start(ctx)
-	defer workerPool.Stop()
+	defer func() { _ = workerPool.Stop() }()
 
 	// Run the bot until the context is cancelled
 	for {

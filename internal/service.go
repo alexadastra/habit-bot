@@ -9,7 +9,7 @@ import (
 type Service struct {
 	bot     *Bot
 	storage *Storage
-	states  map[int]string
+	states  map[int]string // TODO: replace with cache?
 }
 
 func NewService(bot *Bot, storage *Storage) *Service {
@@ -23,25 +23,34 @@ func NewService(bot *Bot, storage *Storage) *Service {
 func (s *Service) handleCommand(command string, userID int, text string) {
 	switch command {
 	case "checkin":
-		err := s.storage.storeUserData(userID, time.Now())
-		if err != nil {
+		if err := s.storage.storeUserData(userID, time.Now()); err != nil {
 			log.Printf("Error storing user data: %v", err)
-			s.bot.SendMessage(int64(userID), "Error storing user data. Please try again.")
+			if err := s.bot.SendMessage(int64(userID), "Error storing user data. Please try again."); err != nil {
+				log.Printf("Error sending the message: %v", err)
+			}
 			return
 		}
-		s.bot.SendMessage(int64(userID), "Successfully checked in!")
+		if err := s.bot.SendMessage(int64(userID), "Successfully checked in!"); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 	case "gratitude":
 		s.states[userID] = "gratitude"
-		s.bot.SendMessage(int64(userID), "What are you grateful for today?")
+		if err := s.bot.SendMessage(int64(userID), "What are you grateful for today?"); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 	default:
-		s.bot.SendMessage(int64(userID), fmt.Sprintf("Invalid command: %s", command))
+		if err := s.bot.SendMessage(int64(userID), fmt.Sprintf("Invalid command: %s", command)); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 	}
 }
 
 func (s *Service) handleMessage(userID int, text string) {
 	state, ok := s.states[userID]
 	if !ok {
-		s.bot.SendMessage(int64(userID), "Invalid state. Please try again.")
+		if err := s.bot.SendMessage(int64(userID), "Invalid state. Please try again."); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 		return
 	}
 
@@ -50,12 +59,18 @@ func (s *Service) handleMessage(userID int, text string) {
 		err := s.storage.storeGratitude(userID, text)
 		if err != nil {
 			log.Printf("Error storing gratitude: %v", err)
-			s.bot.SendMessage(int64(userID), "Error storing gratitude. Please try again.")
+			if err := s.bot.SendMessage(int64(userID), "Error storing gratitude. Please try again."); err != nil {
+				log.Printf("Error sending the message: %v", err)
+			}
 			return
 		}
-		s.bot.SendMessage(int64(userID), "Successfully stored gratitude!")
+		if err := s.bot.SendMessage(int64(userID), "Successfully stored gratitude!"); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 		delete(s.states, userID)
 	default:
-		s.bot.SendMessage(int64(userID), "Invalid state. Please try again.")
+		if err := s.bot.SendMessage(int64(userID), "Invalid state. Please try again."); err != nil {
+			log.Printf("Error sending the message: %v", err)
+		}
 	}
 }

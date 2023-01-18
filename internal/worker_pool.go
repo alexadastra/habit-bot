@@ -62,7 +62,7 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 	}
 }
 
-func (wp *WorkerPool) Stop() {
+func (wp *WorkerPool) Stop() error {
 	wp.cancel()
-	wp.group.Wait()
+	return wp.group.Wait()
 }
