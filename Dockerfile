@@ -19,6 +19,8 @@ FROM scratch
 # Copy our static executable.
 COPY --from=builder /go/bin/habit-bot /go/bin/habit-bot
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-#RUN ls -laR /go
+# Fetch env
+ENV BOT-TOKEN=${BOT-TOKEN}
+ENV MONGO-DB-DSN=${MONGO_DB_DSN}
 # Run the habit-bot binary.
 ENTRYPOINT ["/go/bin/habit-bot"]
