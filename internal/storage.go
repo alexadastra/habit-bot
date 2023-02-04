@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,21 +16,21 @@ type Storage struct {
 	gratitudeColl *mongo.Collection
 }
 
-func NewStorage(dsn string) (*Storage, error) {
+func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	// Set up MongoDB client
 	client, err := mongo.NewClient(options.Client().ApplyURI(dsn))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create client")
 	}
-	err = client.Connect(context.TODO())
+	err = client.Connect(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to connect to db")
 	}
 
 	// Check the connection
-	err = client.Ping(context.TODO(), nil)
+	err = client.Ping(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to ping")
 	}
 
 	usersColl := client.Database("habit-bot").Collection("users")

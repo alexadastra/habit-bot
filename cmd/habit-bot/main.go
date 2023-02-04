@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/alexadastra/habit_bot/internal"
 )
@@ -24,7 +23,7 @@ func main() {
 	defer bot.Stop()
 	log.Println("bot created")
 
-	storage, err := internal.NewStorage(os.Getenv(config.MongoDBDDN))
+	storage, err := internal.NewStorage(ctx, config.MongoDBDDN)
 	if err != nil {
 		log.Fatal(err)
 	}
