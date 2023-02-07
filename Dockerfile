@@ -10,12 +10,15 @@ WORKDIR /app
 
 # Fetch env
 ENV BOT_TOKEN=value1
-ENV MONGO_DB_DSN=value2
+ENV MONGODB_USER=value2
+ENV MONGODB_PASSWORD=value3
+ENV MONGODB_DATABASE=value4
+ENV MONGODB_HOST=value5
 
 # Fetch dependencies using go get.
-RUN go get -d ./...
+RUN go get -d ./... && \
 # Build the binary.
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o main ./cmd/habit-bot
+CGO_ENABLED=0 go build -ldflags="-w -s" -o main ./cmd/habit-bot
 ############################
 # STEP 2 build a small image
 ############################
