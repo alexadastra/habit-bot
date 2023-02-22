@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/alexadastra/habit_bot/internal"
 )
@@ -39,10 +42,13 @@ func main() {
 	defer func() { _ = workerPool.Stop() }()
 
 	// Run the bot until the context is cancelled
-	for {
-		select {
-		case <-ctx.Done():
-			// Context cancelled, shutdown gracefully
-		}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-sigChan:
+		// System signal received.
+		cancel()
+	case <-ctx.Done():
+		// Context cancelled.
 	}
 }
