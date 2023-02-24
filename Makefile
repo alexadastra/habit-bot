@@ -12,9 +12,6 @@ run:
 test:
 	go test -v ./...
 
-docker-build:
-	docker build -t ${DOCKER_APP_IMAGE} .
-
 network-create:
 	@ docker network create ${DOCKER_NETWORK}
 
@@ -45,6 +42,9 @@ mongo-rm: mongo-stop
 migrations-up:
 	@ go run cmd/migrations/main.go up
 
+app-build:
+	docker build -t ${DOCKER_APP_IMAGE} .
+
 app-run:
 	@ docker run -d \
 		--network ${DOCKER_NETWORK} \
@@ -63,5 +63,5 @@ dev-run: docker-build network-create volume-create mongo-run migrations-up app-r
 dev-stop: app-stop mongo-stop
 	@ echo "Stopped successfully!"
 
-clean: app-rm mongo-rm volume-rm network-rm
+dev-clean: app-rm mongo-rm volume-rm network-rm
 	@ echo "Cleaned up successfully!"
