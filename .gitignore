@@ -24,3 +24,5 @@
 
 bin/
 /certs/
+
+values.env

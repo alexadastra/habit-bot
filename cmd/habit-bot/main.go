@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/alexadastra/habit_bot/internal"
 )
@@ -14,7 +16,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bot, err := internal.NewBot(os.Getenv("BOT-TOKEN"))
+	config := internal.NewConfigFromEnv()
+
+	bot, err := internal.NewBot(config.BotToken)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +26,7 @@ func main() {
 	defer bot.Stop()
 	log.Println("bot created")
 
-	storage, err := internal.NewStorage(os.Getenv("MONGO-DB-DSN"))
+	storage, err := internal.NewStorage(ctx, config.MongoDBDDN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,10 +42,13 @@ func main() {
 	defer func() { _ = workerPool.Stop() }()
 
 	// Run the bot until the context is cancelled
-	for {
-		select {
-		case <-ctx.Done():
-			// Context cancelled, shutdown gracefully
-		}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-sigChan:
+		// System signal received.
+		cancel()
+	case <-ctx.Done():
+		// Context cancelled.
 	}
 }
