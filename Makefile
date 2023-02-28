@@ -30,7 +30,7 @@ mongo-run:
 		--network ${DOCKER_NETWORK} \
 		--env-file values.env \
 		--volume ${DOCKER_VOLUME}:/data/db \
-		--name ${DOCKER_DB_IMAGE} mongo:latest
+		--name ${DOCKER_DB_IMAGE} mongo:4.4
 	@ docker network inspect -f '{{json .Containers}}' ${DOCKER_NETWORK} | \
 		jq '.[] | "Container " + .Name + " runs at ip: " + .IPv4Address'
 
