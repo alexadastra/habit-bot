@@ -43,12 +43,12 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	}, err
 }
 
-func (s *Storage) storeUserData(userID int, timestamp time.Time) error {
+func (s *Storage) storeUserData(userID int64, timestamp time.Time) error {
 	_, err := s.usersColl.InsertOne(context.TODO(), bson.M{"user_id": userID, "timestamp": timestamp})
 	return err
 }
 
-func (s *Storage) storeGratitude(userID int, text string) error {
+func (s *Storage) storeGratitude(userID int64, text string) error {
 	_, err := s.gratitudeColl.InsertOne(context.TODO(), bson.M{"user_id": userID, "text": text, "timestamp": time.Now()})
 	return err
 }

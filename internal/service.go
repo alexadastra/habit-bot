@@ -9,18 +9,18 @@ import (
 type Service struct {
 	bot     *Bot
 	storage *Storage
-	states  map[int]string // TODO: replace with cache?
+	states  map[int64]string // TODO: replace with cache?
 }
 
 func NewService(bot *Bot, storage *Storage) *Service {
 	return &Service{
 		bot:     bot,
 		storage: storage,
-		states:  make(map[int]string),
+		states:  make(map[int64]string),
 	}
 }
 
-func (s *Service) handleCommand(command string, userID int, text string) {
+func (s *Service) handleCommand(command string, userID int64, text string) {
 	switch command {
 	case "checkin":
 		if err := s.storage.storeUserData(userID, time.Now()); err != nil {
@@ -45,7 +45,7 @@ func (s *Service) handleCommand(command string, userID int, text string) {
 	}
 }
 
-func (s *Service) handleMessage(userID int, text string) {
+func (s *Service) handleMessage(userID int64, text string) {
 	state, ok := s.states[userID]
 	if !ok {
 		if err := s.bot.SendMessage(int64(userID), "Invalid state. Please try again."); err != nil {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
 
 type UserMessage struct {
-	Id      int
+	Id      int64
 	Message string
 }
 
@@ -37,10 +37,8 @@ func NewBot(token string) (*Bot, error) {
 	}
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
-	updates, err := tgBot.GetUpdatesChan(updateConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get updates")
-	}
+	updates := tgBot.GetUpdatesChan(updateConfig)
+
 	return &Bot{
 		botAPI:    tgBot,
 		inCh:      updates,
