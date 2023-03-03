@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -94,7 +95,24 @@ func (b *Bot) Stop() {
 }
 
 func (b *Bot) SendMessage(chatID int64, text string) error {
+	resp, err := b.botAPI.Request(tgbotapi.NewSetMyCommands(
+		tgbotapi.BotCommand{
+			Command:     "checkin",
+			Description: "Check-in",
+		},
+		tgbotapi.BotCommand{
+			Command:     "gratitude",
+			Description: "Add gratitude",
+		},
+	))
+
+	log.Println(*resp)
+
+	if err != nil {
+		return nil
+	}
+
 	msg := tgbotapi.NewMessage(chatID, text)
-	_, err := b.botAPI.Send(msg)
+	_, err = b.botAPI.Send(msg)
 	return err
 }
