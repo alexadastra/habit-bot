@@ -5,19 +5,10 @@ import (
 	"log"
 	"sync"
 
+	"github.com/alexadastra/habit_bot/internal/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
-
-type UserMessage struct {
-	Id      int64
-	Message string
-}
-
-type UserCommand struct {
-	Command string
-	UserMessage
-}
 
 type Bot struct {
 	botAPI *tgbotapi.BotAPI
@@ -26,8 +17,8 @@ type Bot struct {
 	cancel context.CancelFunc
 	wg     *sync.WaitGroup
 
-	commandCh chan UserCommand
-	messageCh chan UserMessage
+	commandCh chan models.UserCommand
+	messageCh chan models.UserMessage
 }
 
 // NewBot sets up the telegram bot API
@@ -44,16 +35,16 @@ func NewBot(token string) (*Bot, error) {
 		botAPI:    tgBot,
 		inCh:      updates,
 		wg:        &sync.WaitGroup{},
-		commandCh: make(chan UserCommand),
-		messageCh: make(chan UserMessage),
+		commandCh: make(chan models.UserCommand),
+		messageCh: make(chan models.UserMessage),
 	}, nil
 }
 
-func (b *Bot) GetCommandsChan() chan UserCommand {
+func (b *Bot) GetCommandsChan() chan models.UserCommand {
 	return b.commandCh
 }
 
-func (b *Bot) GetMessagesChan() chan UserMessage {
+func (b *Bot) GetMessagesChan() chan models.UserMessage {
 	return b.messageCh
 }
 
@@ -71,18 +62,19 @@ func (b *Bot) Start(ctx context.Context) error {
 				// TODO: log warning here
 				return nil
 			}
+
+			msg := update.Message
+			if msg == nil {
+				continue
+			}
+
 			// Handle commands
-			if update.Message != nil && update.Message.IsCommand() {
-				b.commandCh <- UserCommand{
-					Command:     update.Message.Command(),
-					UserMessage: UserMessage{Id: update.Message.From.ID, Message: update.Message.Text},
-				}
+			if msg.IsCommand() {
+				b.commandCh <- newDomainCommand(msg)
 			}
 
 			// Handle messages that are not commands
-			if update.Message != nil && !update.Message.IsCommand() {
-				b.messageCh <- UserMessage{Id: update.Message.From.ID, Message: update.Message.Text}
-			}
+			b.messageCh <- newDomainMessage(update.Message)
 		}
 	}
 }
@@ -115,4 +107,18 @@ func (b *Bot) SendMessage(chatID int64, text string) error {
 	msg := tgbotapi.NewMessage(chatID, text)
 	_, err = b.botAPI.Send(msg)
 	return err
+}
+
+func newDomainMessage(msg *tgbotapi.Message) models.UserMessage {
+	return models.UserMessage{
+		Id:      msg.From.ID,
+		Message: msg.Text,
+	}
+}
+
+func newDomainCommand(msg *tgbotapi.Message) models.UserCommand {
+	return models.UserCommand{
+		Command:     models.Command(msg.Command()),
+		UserMessage: newDomainMessage(msg),
+	}
 }

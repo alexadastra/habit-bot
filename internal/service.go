@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/alexadastra/habit_bot/internal/models"
 )
 
 type Service struct {
@@ -20,7 +22,7 @@ func NewService(bot *Bot, storage *Storage) *Service {
 	}
 }
 
-func (s *Service) handleCommand(command string, userID int64, text string) {
+func (s *Service) handleCommand(command models.Command, userID int64, text string) {
 	switch command {
 	case "checkin":
 		if err := s.storage.storeUserData(userID, time.Now()); err != nil {

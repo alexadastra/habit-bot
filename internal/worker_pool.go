@@ -4,19 +4,20 @@ import (
 	"context"
 	"log"
 
+	"github.com/alexadastra/habit_bot/internal/models"
 	"golang.org/x/sync/errgroup"
 )
 
 type WorkerPool struct {
-	commands   <-chan UserCommand
-	messages   <-chan UserMessage
+	commands   <-chan models.UserCommand
+	messages   <-chan models.UserMessage
 	service    *Service
 	group      *errgroup.Group
 	cancel     context.CancelFunc
 	numWorkers int
 }
 
-func NewWorkerPool(commands <-chan UserCommand, messages <-chan UserMessage, service *Service, numWorkers int) *WorkerPool {
+func NewWorkerPool(commands <-chan models.UserCommand, messages <-chan models.UserMessage, service *Service, numWorkers int) *WorkerPool {
 	return &WorkerPool{
 		commands:   commands,
 		messages:   messages,
