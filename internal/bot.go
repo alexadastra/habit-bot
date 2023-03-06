@@ -111,7 +111,7 @@ func (b *Bot) SendMessage(chatID int64, text string) error {
 
 func newDomainMessage(msg *tgbotapi.Message) models.UserMessage {
 	return models.UserMessage{
-		Id:      msg.From.ID,
+		UserID:  msg.From.ID,
 		Message: msg.Text,
 	}
 }

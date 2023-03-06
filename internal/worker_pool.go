@@ -51,14 +51,14 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 				return nil
 			}
 			// TODO: process error here
-			wp.service.handleCommand(command.Command, command.Id, command.Message)
+			wp.service.handleCommand(command)
 		case message, ok := <-wp.messages:
 			if !ok {
 				// TODO: log warning here
 				return nil
 			}
 			// TODO: process error here
-			wp.service.handleMessage(message.Id, message.Message)
+			wp.service.handleMessage(message)
 		}
 	}
 }

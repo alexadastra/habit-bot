@@ -8,7 +8,7 @@ const (
 )
 
 type UserMessage struct {
-	Id      int64
+	UserID  int64
 	Message string
 }
 
