@@ -6,6 +6,13 @@ import (
 	"time"
 
 	"github.com/alexadastra/habit_bot/internal/models"
+	"github.com/pkg/errors"
+)
+
+const (
+	storageErrorMessage         = "Error storing user data. Please try again."
+	invalidStateErrorMessage    = "Invalid state. Please try again."
+	gratitudeFailedErrorMessage = "Error storing gratitude. Please try again."
 )
 
 type Service struct {
@@ -22,57 +29,48 @@ func NewService(bot *Bot, storage *Storage) *Service {
 	}
 }
 
-func (s *Service) handleCommand(command models.UserCommand) {
+func (s *Service) handleCommand(command models.UserCommand) error {
 	switch command.Command {
 	case models.Checkin:
+		// the case where something went wrong and we should notify the user about that
+		// should work differently. maybe with some more user-friendly error set
 		if err := s.storage.storeUserData(command.UserID, time.Now()); err != nil {
-			log.Printf("Error storing user data: %v", err)
-			if err := s.bot.SendMessage(command.UserID, "Error storing user data. Please try again."); err != nil {
-				log.Printf("Error sending the message: %v", err)
-			}
-			return
+			log.Printf("Error storing checkin: %v", err)
+			return s.sendMessage(command.UserID, storageErrorMessage)
 		}
-		if err := s.bot.SendMessage(command.UserID, "Successfully checked in!"); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
+
+		return s.sendMessage(command.UserID, "Successfully checked in!")
 	case models.Gratitude:
 		s.states[command.UserID] = "gratitude"
-		if err := s.bot.SendMessage(command.UserID, "What are you grateful for today?"); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
+
+		return s.sendMessage(command.UserID, "What are you grateful for today?")
 	default:
-		if err := s.bot.SendMessage(command.UserID, fmt.Sprintf("Invalid command: %s", command.Command)); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
+		return s.sendMessage(command.UserID, fmt.Sprintf("Invalid command: %s", command.Command))
 	}
 }
 
-func (s *Service) handleMessage(message models.UserMessage) {
+func (s *Service) handleMessage(message models.UserMessage) error {
 	state, ok := s.states[message.UserID]
 	if !ok {
-		if err := s.bot.SendMessage(message.UserID, "Invalid state. Please try again."); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
-		return
+		return s.sendMessage(message.UserID, invalidStateErrorMessage)
 	}
 
 	switch state {
 	case "gratitude":
-		err := s.storage.storeGratitude(message.UserID, message.Message)
-		if err != nil {
+		if err := s.storage.storeGratitude(message.UserID, message.Message); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
-			if err := s.bot.SendMessage(message.UserID, "Error storing gratitude. Please try again."); err != nil {
-				log.Printf("Error sending the message: %v", err)
-			}
-			return
+			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
 		}
-		if err := s.bot.SendMessage(message.UserID, "Successfully stored gratitude!"); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
+
 		delete(s.states, message.UserID)
+
+		return s.sendMessage(message.UserID, "Successfully stored gratitude!")
 	default:
-		if err := s.bot.SendMessage(message.UserID, "Invalid state. Please try again."); err != nil {
-			log.Printf("Error sending the message: %v", err)
-		}
+		return s.sendMessage(message.UserID, invalidStateErrorMessage)
 	}
+}
+
+func (s *Service) sendMessage(userID int64, text string) error {
+	err := s.bot.SendMessage(userID, text)
+	return errors.Wrap(err, "failed to store user data")
 }

@@ -42,23 +42,24 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 	for {
 		select {
 		case <-ctx.Done():
-			// TODO: log warning here
-			log.Println("worker stopped!")
+			log.Printf("worker %d stopped: context cancelled", id)
 			return ctx.Err()
 		case command, ok := <-wp.commands:
 			if !ok {
-				// TODO: log warning here
+				log.Printf("worker %d stopped: commands channel closed", id)
 				return nil
 			}
-			// TODO: process error here
-			wp.service.handleCommand(command)
+			if err := wp.service.handleCommand(command); err != nil {
+				log.Printf("error while handling command: %s", err)
+			}
 		case message, ok := <-wp.messages:
 			if !ok {
-				// TODO: log warning here
+				log.Printf("worker %d stopped: messages channel closed", id)
 				return nil
 			}
-			// TODO: process error here
-			wp.service.handleMessage(message)
+			if err := wp.service.handleMessage(message); err != nil {
+				log.Printf("error while handling message: %s", err)
+			}
 		}
 	}
 }
