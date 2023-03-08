@@ -15,13 +15,18 @@ const (
 	gratitudeFailedErrorMessage = "Error storing gratitude. Please try again."
 )
 
+type UserActionsStorage interface {
+	StoreCheckin(int64, time.Time) error
+	StoreGratitude(int64, string) error
+}
+
 type Service struct {
 	bot     *Bot
-	storage *Storage
+	storage UserActionsStorage
 	states  map[int64]string // TODO: replace with cache?
 }
 
-func NewService(bot *Bot, storage *Storage) *Service {
+func NewService(bot *Bot, storage UserActionsStorage) *Service {
 	return &Service{
 		bot:     bot,
 		storage: storage,
@@ -34,7 +39,7 @@ func (s *Service) handleCommand(command models.UserCommand) error {
 	case models.Checkin:
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set
-		if err := s.storage.storeUserData(command.UserID, time.Now()); err != nil {
+		if err := s.storage.StoreCheckin(command.UserID, time.Now()); err != nil {
 			log.Printf("Error storing checkin: %v", err)
 			return s.sendMessage(command.UserID, storageErrorMessage)
 		}
@@ -57,7 +62,7 @@ func (s *Service) handleMessage(message models.UserMessage) error {
 
 	switch state {
 	case "gratitude":
-		if err := s.storage.storeGratitude(message.UserID, message.Message); err != nil {
+		if err := s.storage.StoreGratitude(message.UserID, message.Message); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
 			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
 		}

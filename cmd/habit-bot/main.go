@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/alexadastra/habit_bot/internal"
+	"github.com/alexadastra/habit_bot/internal/storage/mongodb"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	defer bot.Stop()
 	log.Println("bot created")
 
-	storage, err := internal.NewStorage(ctx, config.MongoDBDDN)
+	storage, err := mongodb.NewStorage(ctx, config.MongoDBDDN)
 	if err != nil {
 		log.Fatal(err)
 	}
