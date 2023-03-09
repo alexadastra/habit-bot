@@ -1,9 +1,9 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/alexadastra/habit_bot/internal/models"
 	"github.com/pkg/errors"
@@ -16,8 +16,8 @@ const (
 )
 
 type UserActionsStorage interface {
-	StoreCheckin(int64, time.Time) error
-	StoreGratitude(int64, string) error
+	StoreCheckin(context.Context, models.UserMessage) error
+	StoreGratitude(context.Context, models.UserMessage) error
 }
 
 type Service struct {
@@ -39,7 +39,7 @@ func (s *Service) handleCommand(command models.UserCommand) error {
 	case models.Checkin:
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set
-		if err := s.storage.StoreCheckin(command.UserID, time.Now()); err != nil {
+		if err := s.storage.StoreCheckin(context.Background(), command.UserMessage); err != nil {
 			log.Printf("Error storing checkin: %v", err)
 			return s.sendMessage(command.UserID, storageErrorMessage)
 		}
@@ -62,7 +62,7 @@ func (s *Service) handleMessage(message models.UserMessage) error {
 
 	switch state {
 	case "gratitude":
-		if err := s.storage.StoreGratitude(message.UserID, message.Message); err != nil {
+		if err := s.storage.StoreGratitude(context.Background(), message); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
 			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
 		}

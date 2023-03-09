@@ -2,8 +2,8 @@ package mongodb
 
 import (
 	"context"
-	"time"
 
+	"github.com/alexadastra/habit_bot/internal/models"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -43,12 +43,25 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	}, err
 }
 
-func (s *Storage) StoreCheckin(userID int64, timestamp time.Time) error {
-	_, err := s.usersColl.InsertOne(context.TODO(), bson.M{"user_id": userID, "timestamp": timestamp})
+func (s *Storage) StoreCheckin(ctx context.Context, checkinMessage models.UserMessage) error {
+	_, err := s.usersColl.InsertOne(
+		ctx,
+		bson.M{
+			"user_id":   checkinMessage.UserID,
+			"timestamp": checkinMessage.SentAt,
+		},
+	)
 	return err
 }
 
-func (s *Storage) StoreGratitude(userID int64, text string) error {
-	_, err := s.gratitudeColl.InsertOne(context.TODO(), bson.M{"user_id": userID, "text": text, "timestamp": time.Now()})
+func (s *Storage) StoreGratitude(ctx context.Context, gratitudeMessage models.UserMessage) error {
+	_, err := s.gratitudeColl.InsertOne(
+		ctx,
+		bson.M{
+			"user_id":   gratitudeMessage.UserID,
+			"text":      gratitudeMessage.Message,
+			"timestamp": gratitudeMessage.SentAt,
+		},
+	)
 	return err
 }

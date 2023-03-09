@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Command string
 
 const (
@@ -10,6 +12,7 @@ const (
 type UserMessage struct {
 	UserID  int64
 	Message string
+	SentAt  time.Time
 }
 
 type UserCommand struct {
