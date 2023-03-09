@@ -10,9 +10,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	databaseName = "habit-bot"
+
+	checkinCollectionName       = "checkin"
+	checkinUserIDCollumnName    = "user_id"
+	checkinTimestampCollumnName = "timestamp"
+
+	gratitudeCollectionName       = "gratitude"
+	gratitudeUserIDCollumnName    = "user_id"
+	gratitudeTextCollumnName      = "text"
+	gratitudeTimestampCollumnName = "timestamp"
+)
+
 type Storage struct {
 	client        *mongo.Client
-	usersColl     *mongo.Collection
+	checkinColl   *mongo.Collection
 	gratitudeColl *mongo.Collection
 }
 
@@ -33,22 +46,22 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 		return nil, errors.Wrap(err, "failed to ping")
 	}
 
-	usersColl := client.Database("habit-bot").Collection("users")
-	gratitudeColl := client.Database("habit-bot").Collection("gratitude")
+	checkinColl := client.Database(databaseName).Collection(checkinCollectionName)
+	gratitudeColl := client.Database(databaseName).Collection(gratitudeCollectionName)
 
 	return &Storage{
 		client:        client,
-		usersColl:     usersColl,
+		checkinColl:   checkinColl,
 		gratitudeColl: gratitudeColl,
 	}, err
 }
 
 func (s *Storage) StoreCheckin(ctx context.Context, checkinMessage models.UserMessage) error {
-	_, err := s.usersColl.InsertOne(
+	_, err := s.checkinColl.InsertOne(
 		ctx,
 		bson.M{
-			"user_id":   checkinMessage.UserID,
-			"timestamp": checkinMessage.SentAt,
+			checkinUserIDCollumnName:    checkinMessage.UserID,
+			checkinTimestampCollumnName: checkinMessage.SentAt,
 		},
 	)
 	return err
@@ -58,9 +71,9 @@ func (s *Storage) StoreGratitude(ctx context.Context, gratitudeMessage models.Us
 	_, err := s.gratitudeColl.InsertOne(
 		ctx,
 		bson.M{
-			"user_id":   gratitudeMessage.UserID,
-			"text":      gratitudeMessage.Message,
-			"timestamp": gratitudeMessage.SentAt,
+			gratitudeUserIDCollumnName:    gratitudeMessage.UserID,
+			gratitudeTextCollumnName:      gratitudeMessage.Message,
+			gratitudeTimestampCollumnName: gratitudeMessage.SentAt,
 		},
 	)
 	return err
