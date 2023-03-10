@@ -61,7 +61,7 @@ func (s *Service) handleMessage(message models.UserMessage) error {
 	}
 
 	switch state {
-	case "gratitude":
+	case models.GratitudeWaitingUserState:
 		if err := s.storage.StoreGratitude(context.Background(), message); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
 			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
