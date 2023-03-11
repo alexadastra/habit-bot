@@ -10,9 +10,14 @@ import (
 )
 
 const (
-	storageErrorMessage         = "Error storing user data. Please try again."
-	invalidStateErrorMessage    = "Invalid state. Please try again."
-	gratitudeFailedErrorMessage = "Error storing gratitude. Please try again."
+	// internal errors
+	checkinFailedErrorMessage       = "Error while saving 'checkin' action. Please try again."
+	gratitudeFailedErrorMessage     = "Error while saving 'gratitude' action. Please try again."
+	stateFetchingFailedErrorMessage = "Error while fetching the user state. Please try again."
+	stateSettingFailedErrorMessage  = "Error while setting the user state. Please try again."
+
+	// user-ish errors
+	invalidStateErrorMessage = "Invalid state. Please try again."
 )
 
 type UserActionsStorage interface {
@@ -20,17 +25,22 @@ type UserActionsStorage interface {
 	StoreGratitude(context.Context, models.UserMessage) error
 }
 
-type Service struct {
-	bot     *Bot
-	storage UserActionsStorage
-	states  map[int64]string // TODO: replace with cache?
+type UserStatesStorage interface {
+	FetchByID(context.Context, int64) (models.UserState, error)
+	SetByID(context.Context, int64, models.UserState) error
 }
 
-func NewService(bot *Bot, storage UserActionsStorage) *Service {
+type Service struct {
+	bot            *Bot
+	actionsStorage UserActionsStorage
+	statesStorage  UserStatesStorage
+}
+
+func NewService(bot *Bot, actionsStorage UserActionsStorage, statesStorage UserStatesStorage) *Service {
 	return &Service{
-		bot:     bot,
-		storage: storage,
-		states:  make(map[int64]string),
+		bot:            bot,
+		actionsStorage: actionsStorage,
+		statesStorage:  statesStorage,
 	}
 }
 
@@ -39,14 +49,21 @@ func (s *Service) handleCommand(command models.UserCommand) error {
 	case models.Checkin:
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set
-		if err := s.storage.StoreCheckin(context.Background(), command.UserMessage); err != nil {
+		if err := s.actionsStorage.StoreCheckin(context.Background(), command.UserMessage); err != nil {
 			log.Printf("Error storing checkin: %v", err)
-			return s.sendMessage(command.UserID, storageErrorMessage)
+			return s.sendMessage(command.UserID, checkinFailedErrorMessage)
 		}
 
 		return s.sendMessage(command.UserID, "Successfully checked in!")
 	case models.Gratitude:
-		s.states[command.UserID] = "gratitude"
+		if err := s.statesStorage.SetByID(
+			context.Background(),
+			command.UserID,
+			models.GratitudeWaitingUserState,
+		); err != nil {
+			log.Printf("Error setting user state: %v", err)
+			return s.sendMessage(command.UserID, stateSettingFailedErrorMessage)
+		}
 
 		return s.sendMessage(command.UserID, "What are you grateful for today?")
 	default:
@@ -55,19 +72,26 @@ func (s *Service) handleCommand(command models.UserCommand) error {
 }
 
 func (s *Service) handleMessage(message models.UserMessage) error {
-	state, ok := s.states[message.UserID]
-	if !ok {
-		return s.sendMessage(message.UserID, invalidStateErrorMessage)
+	state, err := s.statesStorage.FetchByID(context.Background(), message.UserID)
+	if err != nil {
+		return s.sendMessage(message.UserID, stateFetchingFailedErrorMessage)
 	}
 
 	switch state {
 	case models.GratitudeWaitingUserState:
-		if err := s.storage.StoreGratitude(context.Background(), message); err != nil {
+		if err := s.actionsStorage.StoreGratitude(context.Background(), message); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
 			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
 		}
 
-		delete(s.states, message.UserID)
+		if err := s.statesStorage.SetByID(
+			context.Background(),
+			message.UserID,
+			models.DefaultUserState,
+		); err != nil {
+			log.Printf("Error setting user state: %v", err)
+			return s.sendMessage(message.UserID, stateSettingFailedErrorMessage)
+		}
 
 		return s.sendMessage(message.UserID, "Successfully stored gratitude!")
 	default:
