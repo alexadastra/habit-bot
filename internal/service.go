@@ -18,6 +18,9 @@ const (
 
 	// user-ish errors
 	invalidStateErrorMessage = "Invalid state. Please try again."
+
+	// successful messages
+	welcomeMessage = "Welcome to Habit Bot by @alex_ad_astra!"
 )
 
 type UserActionsStorage interface {
@@ -46,6 +49,8 @@ func NewService(bot *Bot, actionsStorage UserActionsStorage, statesStorage UserS
 
 func (s *Service) handleCommand(command models.UserCommand) error {
 	switch command.Command {
+	case models.Start:
+		return s.sendMessage(command.UserID, welcomeMessage)
 	case models.Checkin:
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set

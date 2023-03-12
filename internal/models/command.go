@@ -5,6 +5,7 @@ import "time"
 type Command string
 
 const (
+	Start     Command = "start"
 	Checkin   Command = "checkin"
 	Gratitude Command = "gratitude"
 )
