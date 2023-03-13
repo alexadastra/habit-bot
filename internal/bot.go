@@ -71,6 +71,7 @@ func (b *Bot) Start(ctx context.Context) error {
 			// Handle commands
 			if msg.IsCommand() {
 				b.commandCh <- newDomainCommand(msg)
+				continue
 			}
 
 			// Handle messages that are not commands
