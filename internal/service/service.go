@@ -1,10 +1,11 @@
-package internal
+package service
 
 import (
 	"context"
 	"fmt"
 	"log"
 
+	"github.com/alexadastra/habit_bot/internal/external/bot"
 	"github.com/alexadastra/habit_bot/internal/models"
 	"github.com/pkg/errors"
 )
@@ -34,12 +35,12 @@ type UserStatesStorage interface {
 }
 
 type Service struct {
-	bot            *Bot
+	bot            *bot.Bot
 	actionsStorage UserActionsStorage
 	statesStorage  UserStatesStorage
 }
 
-func NewService(bot *Bot, actionsStorage UserActionsStorage, statesStorage UserStatesStorage) *Service {
+func NewService(bot *bot.Bot, actionsStorage UserActionsStorage, statesStorage UserStatesStorage) *Service {
 	return &Service{
 		bot:            bot,
 		actionsStorage: actionsStorage,
@@ -47,7 +48,7 @@ func NewService(bot *Bot, actionsStorage UserActionsStorage, statesStorage UserS
 	}
 }
 
-func (s *Service) handleCommand(command models.UserCommand) error {
+func (s *Service) HandleCommand(command models.UserCommand) error {
 	switch command.Command {
 	case models.Start:
 		return s.sendMessage(command.UserID, welcomeMessage)
@@ -76,7 +77,7 @@ func (s *Service) handleCommand(command models.UserCommand) error {
 	}
 }
 
-func (s *Service) handleMessage(message models.UserMessage) error {
+func (s *Service) HandleMessage(message models.UserMessage) error {
 	state, err := s.statesStorage.FetchByID(context.Background(), message.UserID)
 	if err != nil {
 		return s.sendMessage(message.UserID, stateFetchingFailedErrorMessage)

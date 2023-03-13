@@ -8,6 +8,8 @@ import (
 	"syscall"
 
 	"github.com/alexadastra/habit_bot/internal"
+	"github.com/alexadastra/habit_bot/internal/external/bot"
+	"github.com/alexadastra/habit_bot/internal/service"
 	"github.com/alexadastra/habit_bot/internal/storage/inmemory"
 	"github.com/alexadastra/habit_bot/internal/storage/mongodb"
 )
@@ -20,7 +22,7 @@ func main() {
 
 	config := internal.NewConfigFromEnv()
 
-	bot, err := internal.NewBot(config.BotToken)
+	bot, err := bot.NewBot(config.BotToken)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +39,7 @@ func main() {
 	stateStorage := inmemory.NewInMemoryStateStorage()
 
 	// Set up the service
-	service := internal.NewService(bot, actionsStorage, stateStorage)
+	service := service.NewService(bot, actionsStorage, stateStorage)
 
 	workerPool := internal.NewWorkerPool(bot.GetCommandsChan(), bot.GetMessagesChan(), service, 10)
 

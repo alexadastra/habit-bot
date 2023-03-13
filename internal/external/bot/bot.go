@@ -1,8 +1,7 @@
-package internal
+package bot
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"github.com/alexadastra/habit_bot/internal/models"
@@ -88,7 +87,7 @@ func (b *Bot) Stop() {
 }
 
 func (b *Bot) SendMessage(chatID int64, text string) error {
-	resp, err := b.botAPI.Request(tgbotapi.NewSetMyCommands(
+	_, err := b.botAPI.Request(tgbotapi.NewSetMyCommands(
 		tgbotapi.BotCommand{
 			Command:     "checkin",
 			Description: "Check-in",
@@ -98,9 +97,6 @@ func (b *Bot) SendMessage(chatID int64, text string) error {
 			Description: "Add gratitude",
 		},
 	))
-
-	log.Println(*resp)
-
 	if err != nil {
 		return nil
 	}
