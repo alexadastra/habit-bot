@@ -56,24 +56,24 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	}, err
 }
 
-func (s *Storage) AddCheckin(ctx context.Context, checkinMessage models.UserMessage) error {
+func (s *Storage) AddCheckin(ctx context.Context, checkinMessage models.CheckinEvent) error {
 	_, err := s.checkinColl.InsertOne(
 		ctx,
 		bson.M{
 			checkinUserIDCollumnName:    checkinMessage.UserID,
-			checkinTimestampCollumnName: checkinMessage.SentAt,
+			checkinTimestampCollumnName: checkinMessage.CreatedAt,
 		},
 	)
 	return err
 }
 
-func (s *Storage) AddGratitude(ctx context.Context, gratitudeMessage models.UserMessage) error {
+func (s *Storage) AddGratitude(ctx context.Context, gratitudeMessage models.GratitudeEvent) error {
 	_, err := s.gratitudeColl.InsertOne(
 		ctx,
 		bson.M{
 			gratitudeUserIDCollumnName:    gratitudeMessage.UserID,
 			gratitudeTextCollumnName:      gratitudeMessage.Message,
-			gratitudeTimestampCollumnName: gratitudeMessage.SentAt,
+			gratitudeTimestampCollumnName: gratitudeMessage.CreatedAt,
 		},
 	)
 	return err

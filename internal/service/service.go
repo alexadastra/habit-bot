@@ -25,8 +25,8 @@ const (
 )
 
 type UserActionsStorage interface {
-	AddCheckin(context.Context, models.UserMessage) error
-	AddGratitude(context.Context, models.UserMessage) error
+	AddCheckin(context.Context, models.CheckinEvent) error
+	AddGratitude(context.Context, models.GratitudeEvent) error
 }
 
 type UserStatesStorage interface {
@@ -55,14 +55,20 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 	case models.Checkin:
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set
-		if err := s.actionsStorage.StoreCheckin(context.Background(), command.UserMessage); err != nil {
+		if err := s.actionsStorage.AddCheckin(
+			context.Background(),
+			models.CheckinEvent{
+				UserID:    command.UserID,
+				CreatedAt: command.SentAt,
+			},
+		); err != nil {
 			log.Printf("Error storing checkin: %v", err)
 			return s.sendMessage(command.UserID, checkinFailedErrorMessage)
 		}
 
 		return s.sendMessage(command.UserID, "Successfully checked in!")
 	case models.Gratitude:
-		if err := s.statesStorage.SetByID(
+		if err := s.statesStorage.Add(
 			context.Background(),
 			command.UserID,
 			models.GratitudeWaitingUserState,
@@ -78,19 +84,26 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 }
 
 func (s *Service) HandleMessage(message models.UserMessage) error {
-	state, err := s.statesStorage.FetchByID(context.Background(), message.UserID)
+	state, err := s.statesStorage.Get(context.Background(), message.UserID)
 	if err != nil {
 		return s.sendMessage(message.UserID, stateFetchingFailedErrorMessage)
 	}
 
 	switch state {
 	case models.GratitudeWaitingUserState:
-		if err := s.actionsStorage.StoreGratitude(context.Background(), message); err != nil {
+		if err := s.actionsStorage.AddGratitude(
+			context.Background(),
+			models.GratitudeEvent{
+				UserID:    message.UserID,
+				Message:   message.Message,
+				CreatedAt: message.SentAt,
+			},
+		); err != nil {
 			log.Printf("Error storing gratitude: %v", err)
 			return s.sendMessage(message.UserID, gratitudeFailedErrorMessage)
 		}
 
-		if err := s.statesStorage.SetByID(
+		if err := s.statesStorage.Add(
 			context.Background(),
 			message.UserID,
 			models.DefaultUserState,
