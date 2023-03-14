@@ -25,13 +25,13 @@ const (
 )
 
 type UserActionsStorage interface {
-	StoreCheckin(context.Context, models.UserMessage) error
-	StoreGratitude(context.Context, models.UserMessage) error
+	AddCheckin(context.Context, models.UserMessage) error
+	AddGratitude(context.Context, models.UserMessage) error
 }
 
 type UserStatesStorage interface {
-	FetchByID(context.Context, int64) (models.UserState, error)
-	SetByID(context.Context, int64, models.UserState) error
+	Get(context.Context, int64) (models.UserState, error)
+	Add(context.Context, int64, models.UserState) error
 }
 
 type Service struct {

@@ -20,7 +20,7 @@ func NewInMemoryStateStorage() *InMemoryStateStorage {
 	}
 }
 
-func (s *InMemoryStateStorage) FetchByID(ctx context.Context, userID int64) (models.UserState, error) {
+func (s *InMemoryStateStorage) Get(ctx context.Context, userID int64) (models.UserState, error) {
 	state, ok := s.statesByIDs.Load(userID)
 	if !ok {
 		log.Printf("%s state not found for userID %d! return default state", logPrefix, userID)
@@ -35,7 +35,7 @@ func (s *InMemoryStateStorage) FetchByID(ctx context.Context, userID int64) (mod
 
 	return st, nil
 }
-func (s *InMemoryStateStorage) SetByID(ctx context.Context, userID int64, newState models.UserState) error {
+func (s *InMemoryStateStorage) Add(ctx context.Context, userID int64, newState models.UserState) error {
 	s.statesByIDs.Store(userID, newState)
 	return nil
 }

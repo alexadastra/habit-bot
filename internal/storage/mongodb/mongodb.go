@@ -56,7 +56,7 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	}, err
 }
 
-func (s *Storage) StoreCheckin(ctx context.Context, checkinMessage models.UserMessage) error {
+func (s *Storage) AddCheckin(ctx context.Context, checkinMessage models.UserMessage) error {
 	_, err := s.checkinColl.InsertOne(
 		ctx,
 		bson.M{
@@ -67,7 +67,7 @@ func (s *Storage) StoreCheckin(ctx context.Context, checkinMessage models.UserMe
 	return err
 }
 
-func (s *Storage) StoreGratitude(ctx context.Context, gratitudeMessage models.UserMessage) error {
+func (s *Storage) AddGratitude(ctx context.Context, gratitudeMessage models.UserMessage) error {
 	_, err := s.gratitudeColl.InsertOne(
 		ctx,
 		bson.M{
