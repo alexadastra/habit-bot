@@ -114,6 +114,7 @@ func newDomainMessage(msg *tgbotapi.Message) models.UserMessage {
 	return models.UserMessage{
 		UserID:  msg.From.ID,
 		Message: msg.Text,
+		SentAt:  msg.Time(),
 	}
 }
 
