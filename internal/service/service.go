@@ -53,7 +53,7 @@ func NewService(bot *bot.Bot, actionsStorage UserActionsStorage, statesStorage U
 	}
 }
 
-func (s *Service) HandleCommand(command models.UserCommand) error {
+func (s *Service) HandleCommand(ctx context.Context, command models.UserCommand) error {
 	switch command.Command {
 	case models.Start:
 		return s.sendMessage(command.UserID, welcomeMessage)
@@ -61,7 +61,7 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 		// the case where something went wrong and we should notify the user about that
 		// should work differently. maybe with some more user-friendly error set
 		if err := s.actionsStorage.AddCheckin(
-			context.TODO(),
+			ctx,
 			models.CheckinEvent{
 				UserID:    command.UserID,
 				CreatedAt: command.SentAt,
@@ -74,7 +74,7 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 		return s.sendMessage(command.UserID, "Successfully checked in!")
 	case models.Gratitude:
 		if err := s.statesStorage.Add(
-			context.TODO(),
+			ctx,
 			command.UserID,
 			models.GratitudeWaitingUserState,
 		); err != nil {
@@ -88,7 +88,7 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 		from := to.Add(-24 * 7 * time.Hour)
 
 		checkins, err := s.actionsStorage.GetCheckinEvents(
-			context.TODO(),
+			ctx,
 			command.UserID,
 			from,
 			to,
@@ -98,7 +98,7 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 		}
 
 		gratitudes, err := s.actionsStorage.GetGratitudeEvents(
-			context.TODO(),
+			ctx,
 			command.UserID,
 			from,
 			to,
@@ -120,8 +120,8 @@ func (s *Service) HandleCommand(command models.UserCommand) error {
 	}
 }
 
-func (s *Service) HandleMessage(message models.UserMessage) error {
-	state, err := s.statesStorage.Get(context.Background(), message.UserID)
+func (s *Service) HandleMessage(ctx context.Context, message models.UserMessage) error {
+	state, err := s.statesStorage.Get(ctx, message.UserID)
 	if err != nil {
 		return s.sendMessage(message.UserID, stateFetchingFailedErrorMessage)
 	}
@@ -129,7 +129,7 @@ func (s *Service) HandleMessage(message models.UserMessage) error {
 	switch state {
 	case models.GratitudeWaitingUserState:
 		if err := s.actionsStorage.AddGratitude(
-			context.TODO(),
+			ctx,
 			models.GratitudeEvent{
 				UserID:    message.UserID,
 				Message:   message.Message,
@@ -141,7 +141,7 @@ func (s *Service) HandleMessage(message models.UserMessage) error {
 		}
 
 		if err := s.statesStorage.Add(
-			context.TODO(),
+			ctx,
 			message.UserID,
 			models.DefaultUserState,
 		); err != nil {

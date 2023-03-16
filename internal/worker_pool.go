@@ -55,7 +55,7 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 				log.Printf("worker %d stopped: commands channel closed", id)
 				return nil
 			}
-			if err := wp.service.HandleCommand(command); err != nil {
+			if err := wp.service.HandleCommand(ctx, command); err != nil {
 				log.Printf("error while handling command: %s", err)
 			}
 		case message, ok := <-wp.messages:
@@ -63,7 +63,7 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 				log.Printf("worker %d stopped: messages channel closed", id)
 				return nil
 			}
-			if err := wp.service.HandleMessage(message); err != nil {
+			if err := wp.service.HandleMessage(ctx, message); err != nil {
 				log.Printf("error while handling message: %s", err)
 			}
 		}
