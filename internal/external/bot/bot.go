@@ -96,6 +96,10 @@ func (b *Bot) SendMessage(chatID int64, text string) error {
 			Command:     "gratitude",
 			Description: "Add gratitude",
 		},
+		tgbotapi.BotCommand{
+			Command:     "stats",
+			Description: "Get weekly stats",
+		},
 	))
 	if err != nil {
 		return nil

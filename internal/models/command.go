@@ -8,6 +8,7 @@ const (
 	Start     Command = "start"
 	Checkin   Command = "checkin"
 	Gratitude Command = "gratitude"
+	Stats	  Command = "stats"
 )
 
 type UserMessage struct {
