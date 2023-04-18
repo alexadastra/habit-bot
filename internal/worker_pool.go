@@ -4,19 +4,26 @@ import (
 	"context"
 	"log"
 
+	"github.com/alexadastra/habit_bot/internal/models"
+	"github.com/alexadastra/habit_bot/internal/service"
 	"golang.org/x/sync/errgroup"
 )
 
 type WorkerPool struct {
-	commands   <-chan UserCommand
-	messages   <-chan UserMessage
-	service    *Service
+	commands   <-chan models.UserCommand
+	messages   <-chan models.UserMessage
+	service    *service.Service
 	group      *errgroup.Group
 	cancel     context.CancelFunc
 	numWorkers int
 }
 
-func NewWorkerPool(commands <-chan UserCommand, messages <-chan UserMessage, service *Service, numWorkers int) *WorkerPool {
+func NewWorkerPool(
+	commands <-chan models.UserCommand,
+	messages <-chan models.UserMessage,
+	service *service.Service,
+	numWorkers int,
+) *WorkerPool {
 	return &WorkerPool{
 		commands:   commands,
 		messages:   messages,
@@ -41,23 +48,24 @@ func (wp *WorkerPool) handleUpdates(ctx context.Context, id int) error {
 	for {
 		select {
 		case <-ctx.Done():
-			// TODO: log warning here
-			log.Println("worker stopped!")
+			log.Printf("worker %d stopped: context cancelled", id)
 			return ctx.Err()
 		case command, ok := <-wp.commands:
 			if !ok {
-				// TODO: log warning here
+				log.Printf("worker %d stopped: commands channel closed", id)
 				return nil
 			}
-			// TODO: process error here
-			wp.service.handleCommand(command.Command, command.Id, command.Message)
+			if err := wp.service.HandleCommand(ctx, command); err != nil {
+				log.Printf("error while handling command: %s", err)
+			}
 		case message, ok := <-wp.messages:
 			if !ok {
-				// TODO: log warning here
+				log.Printf("worker %d stopped: messages channel closed", id)
 				return nil
 			}
-			// TODO: process error here
-			wp.service.handleMessage(message.Id, message.Message)
+			if err := wp.service.HandleMessage(ctx, message); err != nil {
+				log.Printf("error while handling message: %s", err)
+			}
 		}
 	}
 }

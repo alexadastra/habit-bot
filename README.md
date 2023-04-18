@@ -39,5 +39,5 @@ in the terminal.
 `volume-create/rm`|Create/remove the Docker volume for MongoDB persistency
 `mongo-run/stop/rm`|Create/stop/remove MongoDB container
 `migrations-up`|Rollup migrations for MongoDB
-`app-build/run/stop/rm`|Build app Docker image/run/stop/rm docker container
+`app-build/push/pull/run/stop/rm`|Build/push/pull Docker image from ghcr.io and run/stop/rm docker container
 `dev-run/stop/clean`|Create and run/stop/remove the entire environment (network, volume, db, app)
