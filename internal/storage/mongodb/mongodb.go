@@ -3,9 +3,7 @@ package mongodb
 import (
 	"context"
 
-	"github.com/alexadastra/habit_bot/internal/models"
 	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -54,27 +52,4 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 		checkinColl:   checkinColl,
 		gratitudeColl: gratitudeColl,
 	}, err
-}
-
-func (s *Storage) AddCheckin(ctx context.Context, checkinMessage models.CheckinEvent) error {
-	_, err := s.checkinColl.InsertOne(
-		ctx,
-		bson.M{
-			checkinUserIDCollumnName:    checkinMessage.UserID,
-			checkinTimestampCollumnName: checkinMessage.CreatedAt,
-		},
-	)
-	return err
-}
-
-func (s *Storage) AddGratitude(ctx context.Context, gratitudeMessage models.GratitudeEvent) error {
-	_, err := s.gratitudeColl.InsertOne(
-		ctx,
-		bson.M{
-			gratitudeUserIDCollumnName:    gratitudeMessage.UserID,
-			gratitudeTextCollumnName:      gratitudeMessage.Message,
-			gratitudeTimestampCollumnName: gratitudeMessage.CreatedAt,
-		},
-	)
-	return err
 }
