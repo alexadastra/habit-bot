@@ -1,8 +1,9 @@
 DOCKER_NETWORK=test-network
 DOCKER_VOLUME=test-volume
-DOCKER_APP_NAME=habit-bot
-DOCKER_APP_IMAGE=ghcr.io/alexadastra/habit-bot/${DOCKER_APP_NAME}
-DOCKER_DB_IMAGE=habit-bot-mongo
+APP_CONTAINER_NAME=habit-bot
+APP_IMAGE_NAME=ghcr.io/alexadastra/habit-bot/${APP_CONTAINER_NAME}
+DB_CONTAINER_NAME=habit-bot-mongo
+REDIS_CONTAINER_NAME=habit-bot-redis
 
 build:
 	go build -o main .
@@ -26,44 +27,49 @@ volume-rm:
 	@ docker volume rm ${DOCKER_VOLUME} || true
 
 mongo-run:
-	@ docker run -d \
+	@ docker run --rm -d \
 		--network ${DOCKER_NETWORK} \
 		--env-file values.env \
 		--volume ${DOCKER_VOLUME}:/data/db \
-		--name ${DOCKER_DB_IMAGE} mongo:4.4
+		--name ${DB_CONTAINER_NAME} mongo:4.4
 	@ docker network inspect -f '{{json .Containers}}' ${DOCKER_NETWORK} | \
 		jq '.[] | "Container " + .Name + " runs at ip: " + .IPv4Address'
 
 mongo-stop:
-	@ docker stop ${DOCKER_DB_IMAGE} || true
+	@ docker stop ${DB_CONTAINER_NAME} || true
 
 mongo-rm: mongo-stop
-	@ docker rm ${DOCKER_DB_IMAGE} || true
+	@ docker rm ${DB_CONTAINER_NAME} || true
 
 migrations-up:
 	@ go run cmd/migrations/main.go up
 
+redis-run:
+	@ docker run --rm -d \
+		--network ${DOCKER_NETWORK} \
+		-p 6379:6379 redis:latest
+
 app-build:
-	docker build -t ${DOCKER_APP_IMAGE} .
+	docker build -t ${APP_IMAGE_NAME} .
 
 app-push:
-	docker push ${DOCKER_APP_IMAGE}
+	docker push ${APP_IMAGE_NAME}
 
 app-pull:
-	docker pull ${DOCKER_APP_IMAGE}
+	docker pull ${APP_IMAGE_NAME}
 
 app-run:
-	@ docker run -d \
+	@ docker run --rm -d \
 		--network ${DOCKER_NETWORK} \
 		--env-file values.env \
 		-p 8080:8080 \
-		--name ${DOCKER_APP_NAME} ${DOCKER_APP_IMAGE}:latest
+		--name ${APP_CONTAINER_NAME} ${APP_IMAGE_NAME}:latest
 
 app-stop:
-	@ docker stop ${DOCKER_APP_NAME} || true
+	@ docker stop ${APP_CONTAINER_NAME} || true
 
 app-rm: app-stop
-	@ docker rm ${DOCKER_APP_NAME} || true
+	@ docker rm ${APP_CONTAINER_NAME} || true
 
 dev-run: app-build network-create volume-create mongo-run migrations-up app-run
 
