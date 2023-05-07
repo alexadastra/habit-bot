@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/alexadastra/habit_bot/internal"
+	"github.com/alexadastra/habit_bot/internal/background"
 	"github.com/alexadastra/habit_bot/internal/external/bot"
 	"github.com/alexadastra/habit_bot/internal/service"
 	"github.com/alexadastra/habit_bot/internal/storage/inmemory"
@@ -46,6 +48,16 @@ func main() {
 	// Start the worker pool
 	go workerPool.Start(ctx)
 	defer func() { _ = workerPool.Stop() }()
+
+	// Start notifications sending
+	notifier := background.NewStatsNotifier(
+		true, // TODO: move to config
+		service,
+		time.Minute, // TODO: move to config
+	)
+
+	go notifier.Start(ctx)
+	defer notifier.Stop()
 
 	// Run the bot until the context is cancelled
 	sigChan := make(chan os.Signal, 1)
