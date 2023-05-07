@@ -12,6 +12,7 @@ import (
 	"github.com/alexadastra/habit_bot/internal/background"
 	"github.com/alexadastra/habit_bot/internal/external/bot"
 	"github.com/alexadastra/habit_bot/internal/service"
+	"github.com/alexadastra/habit_bot/internal/service/stats_service"
 	"github.com/alexadastra/habit_bot/internal/storage/inmemory"
 	"github.com/alexadastra/habit_bot/internal/storage/mongodb"
 )
@@ -32,16 +33,18 @@ func main() {
 	defer bot.Stop()
 	log.Println("bot created")
 
-	actionsStorage, err := mongodb.NewStorage(ctx, config.MongoDBDDN)
+	mongoStorage, err := mongodb.NewStorage(ctx, config.MongoDBDDN)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("storage created")
 
+	statsService := stats_service.NewStatsService(mongoStorage)
+
 	stateStorage := inmemory.NewInMemoryStateStorage()
 
 	// Set up the service
-	service := service.NewService(bot, actionsStorage, stateStorage)
+	service := service.NewService(bot, mongoStorage, stateStorage, statsService)
 
 	workerPool := internal.NewWorkerPool(bot.GetCommandsChan(), bot.GetMessagesChan(), service, 10)
 

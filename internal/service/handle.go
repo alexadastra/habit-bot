@@ -17,7 +17,7 @@ func (s *Service) HandleCommand(ctx context.Context, command models.UserCommand)
 	case models.Gratitude:
 		return s.handleGratitudeCommand(ctx, command)
 	case models.Stats:
-		return s.fetchStats(ctx, command)
+		return s.handleStats(ctx, command)
 	default:
 		return s.sendMessage(command.UserID, fmt.Sprintf("Invalid command: %s", command.Command))
 	}
