@@ -7,10 +7,10 @@ Habit-bot is a Telegram bot for tracking habits. Currently these are 'check-in' 
 ### Prerequisites
 To run the app locally inside the Docker, you will need only Docker or any other container software with the same API (e.g. Podman). You will also need golang v1.20 to build the app locally or run tests.
 #### Setting up the environment (for CentOS dedicated server)
-1. Install Docker ((link)[https://docs.docker.com/engine/install/centos/]);
-2. Install Golang ((link)[https://linuxize.com/post/how-to-install-go-on-centos-7/], but replace 1.13 version with 1.20);
-3. Install Git ((link)[https://www.digitalocean.com/community/tutorials/how-to-install-git-on-centos-7]);
-4. Instll Jq tool ((link)[https://www.cyberithub.com/how-to-install-jq-json-processor-on-rhel-centos-7-8/])
+1. Install Docker ([link](https://docs.docker.com/engine/install/centos/));
+2. Install Golang ([link](https://linuxize.com/post/how-to-install-go-on-centos-7/), but replace 1.13 version with 1.20);
+3. Install Git ([link](https://www.digitalocean.com/community/tutorials/how-to-install-git-on-centos-7));
+4. Instll Jq tool ([link](https://www.cyberithub.com/how-to-install-jq-json-processor-on-rhel-centos-7-8/))
 5. Pull the repo:
 ```bash
 git clone https://github.com/alexadastra/habit-bot.git && cd habit-bot

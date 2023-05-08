@@ -13,7 +13,7 @@ func (s *Service) handleStats(ctx context.Context, command models.UserCommand) e
 
 	if err != nil {
 		log.Println(err)
-		s.sendMessage(
+		return s.sendMessage(
 			command.UserID,
 			statsFetchingFailedErrorMessage,
 		)

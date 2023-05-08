@@ -60,7 +60,7 @@ func main() {
 	)
 
 	go notifier.Start(ctx)
-	defer notifier.Stop()
+	defer func() { _ = notifier.Stop() }()
 
 	// Run the bot until the context is cancelled
 	sigChan := make(chan os.Signal, 1)
