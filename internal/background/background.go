@@ -27,6 +27,8 @@ func newBackgroundJob(
 		isEnabled: isEnabled,
 		duration:  duration,
 		callback:  callback,
+		wg:        &sync.WaitGroup{},
+		once:      &sync.Once{},
 	}
 }
 
