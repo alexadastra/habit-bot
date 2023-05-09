@@ -33,7 +33,7 @@ func main() {
 	defer bot.Stop()
 	log.Println("bot created")
 
-	mongoStorage, err := mongodb.NewStorage(ctx, config.MongoDBDDN)
+	mongoStorage, err := mongodb.NewStorage(ctx, config.MongoDBDSN)
 	if err != nil {
 		log.Fatal(err)
 	}

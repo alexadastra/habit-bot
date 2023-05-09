@@ -5,6 +5,11 @@ APP_IMAGE_NAME=ghcr.io/alexadastra/habit-bot/${APP_CONTAINER_NAME}
 DB_CONTAINER_NAME=habit-bot-mongo
 REDIS_CONTAINER_NAME=habit-bot-redis
 
+ifneq (,$(wildcard ./values.env))
+    include values.env
+    export
+endif
+
 build:
 	go build -o main .
 
@@ -47,7 +52,13 @@ migrations-up:
 redis-run:
 	@ docker run --rm -d \
 		--network ${DOCKER_NETWORK} \
-		-p 6379:6379 redis:latest
+		-p 6379:6379 \
+		--name ${REDIS_CONTAINER_NAME} \
+		redis:7.2-rc1 redis-server \
+		--requirepass ${REDIS_PASSWD}
+
+redis-stop:
+	@ docker stop ${REDIS_CONTAINER_NAME}
 
 app-build:
 	docker build -t ${APP_IMAGE_NAME} .
@@ -73,7 +84,7 @@ app-rm: app-stop
 
 dev-run: app-build network-create volume-create mongo-run migrations-up app-run
 
-dev-stop: app-stop mongo-stop
+dev-stop: app-stop redis-stop mongo-stop
 	@ echo "Stopped successfully!"
 
 dev-clean: app-rm mongo-rm volume-rm network-rm
