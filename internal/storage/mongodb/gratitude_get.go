@@ -9,6 +9,8 @@ import (
 	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	db_models "github.com/alexadastra/habit_bot/internal/storage/mongodb/models"
 )
 
 func (s *Storage) GetGratitudeEvents(
@@ -60,10 +62,10 @@ func (s *Storage) GetGratitudeEvents(
 		return nil, errors.Wrap(err, "failed to get events from DB")
 	}
 
-	var result []GratitudeEvent
+	var result []db_models.GratitudeEvent
 	if err = cursor.All(ctx, &result); err != nil {
 		return nil, errors.Wrap(err, "failed to scan events into result")
 	}
 
-	return lo.Map(result, func(e GratitudeEvent, idx int) models.GratitudeEvent { return e.ToDomain() }), nil
+	return lo.Map(result, func(e db_models.GratitudeEvent, idx int) models.GratitudeEvent { return e.ToDomain() }), nil
 }

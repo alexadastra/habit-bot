@@ -19,20 +19,26 @@ const (
 	gratitudeUserIDCollumnName    = "user_id"
 	gratitudeTextCollumnName      = "text"
 	gratitudeTimestampCollumnName = "timestamp"
+
+	actionCollectionName           = "action"
+	actionLastExecutedAtColumnName = "last_executed_at"
+	actionSchaduledAtColumnName    = "scheduled_at"
 )
 
 type Storage struct {
 	client        *mongo.Client
 	checkinColl   *mongo.Collection
 	gratitudeColl *mongo.Collection
+	actionColl    *mongo.Collection
 }
 
+// NewStorage sets up MongoDB client and creates new Storage
 func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
-	// Set up MongoDB client
 	client, err := mongo.NewClient(options.Client().ApplyURI(dsn))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create client")
 	}
+
 	err = client.Connect(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect to db")
@@ -46,10 +52,12 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 
 	checkinColl := client.Database(databaseName).Collection(checkinCollectionName)
 	gratitudeColl := client.Database(databaseName).Collection(gratitudeCollectionName)
+	actionColl := client.Database(databaseName).Collection(actionCollectionName)
 
 	return &Storage{
 		client:        client,
 		checkinColl:   checkinColl,
 		gratitudeColl: gratitudeColl,
+		actionColl:    actionColl,
 	}, err
 }

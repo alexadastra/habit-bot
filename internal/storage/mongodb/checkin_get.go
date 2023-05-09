@@ -9,6 +9,8 @@ import (
 	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	db_models "github.com/alexadastra/habit_bot/internal/storage/mongodb/models"
 )
 
 func (s *Storage) GetCheckinEvents(
@@ -60,10 +62,10 @@ func (s *Storage) GetCheckinEvents(
 		return nil, errors.Wrap(err, "failed to get events from DB")
 	}
 
-	var result []CheckinEvent
+	var result []db_models.CheckinEvent
 	if err = cursor.All(ctx, &result); err != nil {
 		return nil, errors.Wrap(err, "failed to scan events into result")
 	}
 
-	return lo.Map(result, func(e CheckinEvent, idx int) models.CheckinEvent { return e.ToDomain() }), nil
+	return lo.Map(result, func(e db_models.CheckinEvent, idx int) models.CheckinEvent { return e.ToDomain() }), nil
 }
