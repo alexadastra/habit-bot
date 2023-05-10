@@ -12,9 +12,11 @@ import (
 	"github.com/alexadastra/habit_bot/internal/background"
 	"github.com/alexadastra/habit_bot/internal/external/bot"
 	"github.com/alexadastra/habit_bot/internal/service"
+	"github.com/alexadastra/habit_bot/internal/service/actions_service"
 	"github.com/alexadastra/habit_bot/internal/service/stats_service"
 	"github.com/alexadastra/habit_bot/internal/storage/inmemory"
 	"github.com/alexadastra/habit_bot/internal/storage/mongodb"
+	"github.com/alexadastra/habit_bot/internal/storage/redis"
 )
 
 func main() {
@@ -41,12 +43,25 @@ func main() {
 
 	statsService := stats_service.NewStatsService(mongoStorage)
 
+	queue := redis.NewRedisQueue(config.RedisCreds)
+	log.Println("queue created")
+
+	actionsService, err := actions_service.New(ctx, queue, mongoStorage)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	stateStorage := inmemory.NewInMemoryStateStorage()
 
 	// Set up the service
 	service := service.NewService(bot, mongoStorage, stateStorage, statsService)
 
-	workerPool := internal.NewWorkerPool(bot.GetCommandsChan(), bot.GetMessagesChan(), service, 10)
+	workerPool := internal.NewWorkerPool(
+		bot.GetCommandsChan(),
+		bot.GetMessagesChan(),
+		service,
+		10, // TODO: move to config
+	)
 
 	// Start the worker pool
 	go workerPool.Start(ctx)
@@ -55,8 +70,8 @@ func main() {
 	// Start notifications sending
 	notifier := background.NewStatsNotifier(
 		true, // TODO: move to config
-		service,
-		time.Minute, // TODO: move to config
+		actionsService,
+		time.Second, // TODO: move to config
 	)
 
 	go notifier.Start(ctx)

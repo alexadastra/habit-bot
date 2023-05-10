@@ -4,16 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/alexadastra/habit_bot/internal/service"
+	"github.com/alexadastra/habit_bot/internal/service/actions_service"
 )
 
 func NewStatsNotifier(
 	isEnabled bool,
-	service *service.Service,
+	service *actions_service.ActionsService,
 	tickerDuration time.Duration,
 ) backgroundJob {
 	handleFunc := func(ctx context.Context) {
-		// TODO: add service notification sending here
+		service.Process(ctx)
 	}
 
 	return newBackgroundJob(
