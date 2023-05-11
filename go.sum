@@ -1,3 +1,5 @@
+github.com/aptible/supercronic v0.2.24 h1:pEeGE/GmXr+0yh0rqBS6IKF96iOB89SrOUJyZ/xYRis=
+github.com/aptible/supercronic v0.2.24/go.mod h1:mrrR6YgUiOvR8zPyLl8zPcHcHmuNN5kht7W7pD/gVrQ=
 github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cbYE=
 github.com/cespare/xxhash/v2 v2.1.2/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

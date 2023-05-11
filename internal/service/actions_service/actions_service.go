@@ -80,8 +80,10 @@ func (s *ActionsService) Process(ctx context.Context) {
 	// get the new execution time of the action
 	now := time.Now().UTC()
 
+	scheduledAt := action.GetNextExecutionTime()
+
 	// if the execution time has not yet arrived, put the action back in the queue
-	if (action.LastExecutedAt != time.Time{}) && now.Before(action.ScheduledAt) {
+	if (action.LastExecutedAt != time.Time{}) && now.Before(scheduledAt) {
 		err = s.addAction(ctx, action)
 		if err != nil {
 			log.Println("Failed to push action back to queue:", err)
@@ -102,16 +104,11 @@ func (s *ActionsService) Process(ctx context.Context) {
 		// TODO: retry?
 	}
 
-	// TODO: repush the action if the action has such option
-	isRetriable := true
-
-	if !isRetriable {
+	if !action.IsRepeatable {
 		return
 	}
 
 	action.LastExecutedAt = now
-	// TODO: calculate next time according to the action itself
-	action.ScheduledAt = now.Add(1 * time.Minute)
 
 	if err := s.storage.UpdateActionExecution(ctx, action.ID, action.LastExecutedAt, action.ScheduledAt); err != nil {
 		log.Println("Failed to update action:", err)
