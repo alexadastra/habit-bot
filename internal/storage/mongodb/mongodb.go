@@ -20,9 +20,14 @@ const (
 	gratitudeTextCollumnName      = "text"
 	gratitudeTimestampCollumnName = "timestamp"
 
-	actionCollectionName           = "action"
-	actionLastExecutedAtColumnName = "last_executed_at"
-	actionSchaduledAtColumnName    = "scheduled_at"
+	actionCollectionName = "action"
+
+	actionLogCollectionName        = "action_log"
+	actionLogIDColumnName          = "_id"
+	actionLogActionLogIDColumnName = "action_id"
+	actionLogExecutedAtCollumnName = "executed_at"
+	actionLogDurationCollumnName   = "duration"
+	actionLogResultCollumnName     = "result"
 )
 
 type Storage struct {
@@ -30,6 +35,7 @@ type Storage struct {
 	checkinColl   *mongo.Collection
 	gratitudeColl *mongo.Collection
 	actionColl    *mongo.Collection
+	actionLogColl *mongo.Collection
 }
 
 // NewStorage sets up MongoDB client and creates new Storage
@@ -53,11 +59,13 @@ func NewStorage(ctx context.Context, dsn string) (*Storage, error) {
 	checkinColl := client.Database(databaseName).Collection(checkinCollectionName)
 	gratitudeColl := client.Database(databaseName).Collection(gratitudeCollectionName)
 	actionColl := client.Database(databaseName).Collection(actionCollectionName)
+	actionLogColl := client.Database(databaseName).Collection(actionLogCollectionName)
 
 	return &Storage{
 		client:        client,
 		checkinColl:   checkinColl,
 		gratitudeColl: gratitudeColl,
 		actionColl:    actionColl,
+		actionLogColl: actionLogColl,
 	}, err
 }

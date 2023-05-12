@@ -8,6 +8,7 @@ import (
 	migrate "github.com/xakep666/mongo-migrate"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func init() {
@@ -39,19 +40,35 @@ func init() {
 			_, err = db.Collection("action").InsertOne(
 				context.TODO(),
 				bson.M{
-					"_id":              id.String(),
-					"name":             "pochesatso",
-					"priority":         0,
-					"scheduled_at":     time.Now().UTC(),
-					"is_cancelled":     false,
-					"last_executed_at": nil,
+					"_id":            id.String(),
+					"name":           "pochesatso",
+					"priority":       0,
+					"is_cancelled":   false,
+					"crontab":        "* * * * * *",
+					"is_repeatable": true,
+					"scheduled_at":   time.Now().UTC(),
 				},
 			)
 			if err != nil {
 				return err
 			}
 
-			return nil
+			idxName := "action_log_action_id_index"
+			f := false
+
+			_, err = db.Collection("action_log").Indexes().CreateOne(
+				context.TODO(),
+				mongo.IndexModel{
+					Keys: bson.M{
+						"action_id": 1,
+					},
+					Options: &options.IndexOptions{
+						Name:   &idxName,
+						Unique: &f,
+					},
+				},
+			)
+			return err
 		},
 		func(db *mongo.Database) error {
 			return db.Collection("action").Drop(context.TODO())
