@@ -20,7 +20,8 @@ const (
 	gratitudeTextCollumnName      = "text"
 	gratitudeTimestampCollumnName = "timestamp"
 
-	actionCollectionName = "action"
+	actionCollectionName        = "action"
+	actionScheduledAtColumnName = "scheduled_at"
 
 	actionLogCollectionName        = "action_log"
 	actionLogIDColumnName          = "_id"

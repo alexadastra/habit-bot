@@ -110,8 +110,9 @@ func (s *ActionsService) Process(ctx context.Context) {
 
 	action.LastExecutedAt = now
 
-	if err := s.storage.UpdateActionExecution(ctx, action.ID, action.LastExecutedAt, action.ScheduledAt); err != nil {
-		log.Println("Failed to update action:", err)
+	if err := s.storage.UpdateActionExecution(ctx, action.ID, action.ScheduledAt); err != nil {
+		log.Println("Failed to update action scheduled time", err)
+		return
 	}
 
 	if err := s.addAction(ctx, action); err != nil {
