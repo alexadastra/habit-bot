@@ -2,22 +2,24 @@ package models
 
 import (
 	"time"
-
-	"github.com/aptible/supercronic/cronexpr"
 )
 
 type Action struct {
-	ID   string
-	Name string
-	IsCancelled    bool
-	LastExecutedAt time.Time
+	ID          string
+	IsCancelled bool
 
-	IsRepeatable bool
-	Priority     int64
+	ActionExecutionerProperties
 
-	Crontab string
+	ActionSchedulerProperties
 }
 
-func (a *Action) GetNextExecutionTime() time.Time {
-	return cronexpr.MustParse(a.Crontab).Next(time.Now().UTC())
+type ActionExecutionerProperties struct {
+	Name     string
+	Priority int64
+}
+
+type ActionSchedulerProperties struct {
+	Crontab      string
+	IsRepeatable bool
+	ScheduledAt  time.Time
 }
