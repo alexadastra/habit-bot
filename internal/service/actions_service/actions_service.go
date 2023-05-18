@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/alexadastra/habit_bot/internal/models"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 )
 
 type Queue interface {
@@ -16,13 +19,17 @@ type Queue interface {
 type ActionsStorage interface {
 	GetActionByID(ctx context.Context, id string) (models.Action, error)
 	GetAllActions(ctx context.Context) ([]models.Action, error)
-	UpdateActionExecution(context.Context, string, time.Time, time.Time) error
+	UpdateActionExecution(context.Context, string, time.Time) error
+
+	AddActionLog(context.Context, models.ActionLog) error
 }
 
 // ActionsService represents a scheduler that uses a priority queue and an action storage
 type ActionsService struct {
 	queue   Queue
 	storage ActionsStorage
+
+	parser cron.Parser
 }
 
 // New creates a new Scheduler with the given RedisQueue
@@ -30,6 +37,7 @@ func New(ctx context.Context, queue Queue, storage ActionsStorage) (*ActionsServ
 	service := &ActionsService{
 		queue:   queue,
 		storage: storage,
+		parser:  cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor),
 	}
 
 	if err := service.startup(ctx); err != nil {
@@ -55,6 +63,8 @@ func (s *ActionsService) startup(ctx context.Context) error {
 }
 
 func (s *ActionsService) Process(ctx context.Context) {
+	startedAt := time.Now().UTC()
+
 	// get the next action from the queue
 	actionIDs, err := s.queue.Pop(ctx, 1)
 	if err != nil {
@@ -77,13 +87,10 @@ func (s *ActionsService) Process(ctx context.Context) {
 		return
 	}
 
-	// get the new execution time of the action
-	now := time.Now().UTC()
-
-	scheduledAt := action.GetNextExecutionTime()
+	timeToExecute := time.Now().UTC().After(action.ScheduledAt)
 
 	// if the execution time has not yet arrived, put the action back in the queue
-	if (action.LastExecutedAt != time.Time{}) && now.Before(scheduledAt) {
+	if !timeToExecute {
 		err = s.addAction(ctx, action)
 		if err != nil {
 			log.Println("Failed to push action back to queue:", err)
@@ -104,11 +111,34 @@ func (s *ActionsService) Process(ctx context.Context) {
 		// TODO: retry?
 	}
 
+	doneAt := time.Now().UTC()
+
+	if err := s.storage.AddActionLog(
+		ctx,
+		models.ActionLog{
+			ID:               uuid.NewString(),
+			ActionID:         action.ID,
+			ExecutedAt:       doneAt,
+			DurationMillisec: doneAt.Sub(startedAt).Milliseconds(),
+			// TODO: remove hardcode
+			Result: map[string]string{
+				"status": "done",
+			},
+		},
+	); err != nil {
+		log.Println("Failed to add action log:", err)
+	}
+
 	if !action.IsRepeatable {
 		return
 	}
 
-	action.LastExecutedAt = now
+	// reset scheduledAt to the new execution time
+	action.ScheduledAt, err = s.getNextExecutionTime(action)
+	if err != nil {
+		log.Println("Failed to reset action scheduled time:", err)
+		return
+	}
 
 	if err := s.storage.UpdateActionExecution(ctx, action.ID, action.ScheduledAt); err != nil {
 		log.Println("Failed to update action scheduled time", err)
@@ -130,6 +160,15 @@ func (s *ActionsService) addAction(ctx context.Context, action models.Action) er
 // but later may add prioritisation for some types of actions
 func getPriority(action models.Action) int64 {
 	return action.ScheduledAt.Unix()
+}
+
+func (s *ActionsService) getNextExecutionTime(a models.Action) (time.Time, error) {
+	cronExpr, err := s.parser.Parse(a.Crontab)
+	if err != nil {
+		return time.Time{}, errors.Wrap(err, "failed to parse crontab")
+	}
+
+	return cronExpr.Next(time.Now().UTC()), nil
 }
 
 func (s *ActionsService) execute(action models.Action) error {
