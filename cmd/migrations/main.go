@@ -47,6 +47,11 @@ func main() {
 		if err := down(); err != nil {
 			log.Fatal(err)
 		}
+		log.Println("Successfully rollback one migration!")
+	case "down-all":
+		if err := downAll(); err != nil {
+			log.Fatal(err)
+		}
 		log.Println("Successfully rollback all migrations!")
 	default:
 		log.Fatalf("unknown command: %s", option)
@@ -100,5 +105,9 @@ func up() error {
 }
 
 func down() error {
+	return migrate.Down(1)
+}
+
+func downAll() error {
 	return migrate.Down(migrate.AllAvailable)
 }
