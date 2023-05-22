@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -43,10 +44,37 @@ func main() {
 
 	statsService := stats_service.NewStatsService(mongoStorage)
 
+	// TODO: move to service layer
+	sendStatsFunc := func(ctx context.Context) error {
+		const myUserID = int64(310163492)
+		checkins, gratitudes, err := statsService.FetchStats(ctx, myUserID)
+
+		if err != nil {
+			log.Println(err)
+			return bot.SendMessage(myUserID, "peepeepoopoo")
+		}
+
+		return bot.SendMessage(
+			myUserID,
+			fmt.Sprintf(
+				"Great job! This week you've tracked down %d checkin events and %d gratitude events!",
+				checkins,
+				gratitudes,
+			),
+		)
+	}
+
 	queue := redis.NewRedisQueue(config.RedisCreds)
 	log.Println("queue created")
 
-	actionsService, err := actions_service.New(ctx, queue, mongoStorage)
+	actionsService, err := actions_service.New(
+		ctx,
+		queue,
+		mongoStorage,
+		map[string]func(ctx context.Context) error{
+			"pochesatso": sendStatsFunc,
+		},
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
